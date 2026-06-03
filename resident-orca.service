@@ -1,0 +1,29 @@
+[Unit]
+Description=Resident Orca Cybersecurity C2 Server
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=orca
+WorkingDirectory=/opt/resident-orca
+Environment="PATH=/opt/resident-orca/orca_env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/opt/resident-orca/orca_env/bin/python3 /opt/resident-orca/resident_orca.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=resident-orca
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/resident-orca/.resident_orca
+ReadWritePaths=/opt/resident-orca/orca_reports
+ReadWritePaths=/opt/resident-orca/temp
+
+[Install]
+WantedBy=multi-user.target

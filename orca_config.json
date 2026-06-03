@@ -1,0 +1,45 @@
+{
+    "version": "1.0.0",
+    "database": {
+        "path": ".resident_orca/orca_data.db",
+        "backup_interval": 86400
+    },
+    "logging": {
+        "level": "INFO",
+        "file": ".resident_orca/orca.log",
+        "max_size_mb": 50,
+        "backup_count": 5
+    },
+    "web": {
+        "enabled": true,
+        "port": 5000,
+        "host": "0.0.0.0",
+        "secret_key": "change-me-in-production"
+    },
+    "phishing": {
+        "enabled": true,
+        "port": 8080,
+        "auto_stop_after": 3600
+    },
+    "traffic": {
+        "max_concurrent": 10,
+        "default_packet_rate": 100,
+        "max_duration": 300
+    },
+    "ssh": {
+        "default_port": 22,
+        "timeout": 30,
+        "max_connections": 5
+    },
+    "threat_detection": {
+        "enabled": true,
+        "auto_block": false,
+        "alert_threshold": "medium"
+    },
+    "bots": {
+        "discord": {"enabled": false, "prefix": "!"},
+        "telegram": {"enabled": false},
+        "slack": {"enabled": false},
+        "imessage": {"enabled": false}
+    }
+}

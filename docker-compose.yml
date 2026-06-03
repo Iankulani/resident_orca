@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  resident-orca:
+    build: .
+    container_name: resident_orca
+    hostname: orca-c2
+    restart: unless-stopped
+    ports:
+      - "5000:5000"    # Web Dashboard
+      - "8080:8080"    # Phishing Server
+      - "22:22"        # SSH (optional)
+    volumes:
+      # Persistent data
+      - orca_data:/app/.resident_orca
+      - orca_reports:/app/orca_reports
+      - orca_temp:/app/temp
+      # SSH keys (if needed)
+      - ~/.ssh:/home/orca/.ssh:ro
+      # Config override
+      - ./config:/app/config:ro
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - ORCA_ENV=docker
+    networks:
+      - orca_network
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  orca-dashboard:
+    build: .
+    container_name: orca_dashboard
+    ports:
+      - "5001:5000"    # Dashboard only
+    environment:
+      - ORCA_MODE=dashboard
+    volumes:
+      - orca_data:/app/.resident_orca
+    depends_on:
+      - resident-orca
+    restart: unless-stopped
+
+volumes:
+  orca_data:
+    driver: local
+  orca_reports:
+    driver: local
+  orca_temp:
+    driver: local
+
+networks:
+  orca_network:
+    driver: bridge

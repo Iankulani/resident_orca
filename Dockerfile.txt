@@ -1,0 +1,90 @@
+# Resident Orca - Alpine-based Docker Image
+FROM python:3.11-alpine
+
+LABEL maintainer="Ian Carter Kulani"
+LABEL description="Resident Orca - Cybersecurity Command & Control Server"
+LABEL version="1.0.0"
+
+# Install system dependencies
+RUN apk update && apk add --no-cache \
+    # Network tools
+    nmap \
+    nmap-scripts \
+    net-tools \
+    iputils \
+    traceroute \
+    bind-tools \
+    whois \
+    curl \
+    wget \
+    # Development tools
+    gcc \
+    musl-dev \
+    libffi-dev \
+    openssl-dev \
+    python3-dev \
+    # Scapy dependencies
+    tcpdump \
+    libpcap-dev \
+    # Nikto for web scanning
+    perl \
+    git \
+    # iptables for firewall
+    iptables \
+    # Optional tools
+    jq \
+    vim \
+    nano \
+    && rm -rf /var/cache/apk/*
+
+# Install Nikto from source
+RUN git clone https://github.com/sullo/nikto.git /opt/nikto && \
+    ln -s /opt/nikto/program/nikto.pl /usr/local/bin/nikto && \
+    chmod +x /opt/nikto/program/nikto.pl
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir \
+    aiohttp \
+    aiodns \
+    aiofiles
+
+# Copy application files
+COPY resident_orca.py .
+COPY test_commands.py .
+COPY .resident_orca/ .resident_orca/
+
+# Create necessary directories
+RUN mkdir -p /app/.resident_orca \
+    /app/orca_reports \
+    /app/orca_reports/graphics \
+    /app/temp \
+    /app/.resident_orca/ssh_keys \
+    /app/.resident_orca/phishing_pages
+
+# Create non-root user
+RUN addgroup -g 1000 orca && \
+    adduser -D -u 1000 -G orca orca && \
+    chown -R orca:orca /app
+
+# Switch to non-root user
+USER orca
+
+# Expose ports
+EXPOSE 5000 8080 22
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/ || exit 1
+
+# Entry point
+ENTRYPOINT ["python3", "resident_orca.py"]
+
+# Default command (can be overridden)
+CMD []
